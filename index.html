@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>灵魂猫格测试</title>
+  <style>
+    body { font-family: sans-serif; max-width: 400px; margin: 50px auto; padding: 20px; text-align: center; }
+    input, button { padding: 10px; width: 100%; margin: 10px 0; box-sizing: border-box; }
+    #result { margin-top: 15px; font-weight: bold; word-break: break-all; padding: 10px; border-radius: 5px; display: none; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .loading { background: #d1ecf1; color: #0c5460; }
+  </style>
+</head>
+<body>
+  <h1>🐱 灵魂猫格测试</h1>
+  <p>输入测试密码开始探索</p>
+  <input type="password" id="pwd" placeholder="请输入密码 (如 cat2024)">
+  <button onclick="checkPwd()">开始测试</button>
+  <div id="result"></div>
+
+  <script>
+    const WORKER_URL = 'https://cat-test-auth.1197832085.workers.dev/';
+    async function checkPwd() {
+      const pwd = document.getElementById('pwd').value.trim();
+      const btn = document.querySelector('button');
+      const resultEl = document.getElementById('result');
+      if (!pwd) { showResult('请输入密码', 'error'); return; }
+      btn.disabled = true; btn.textContent = '验证中...';
+      showResult('正在验证...', 'loading');
+      try {
+        const res = await fetch(WORKER_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pwd: pwd })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          showResult('✅ 验证成功！进入测试...', 'success');
+          localStorage.setItem('cat_test_auth', '1');
+          // 有答题页后取消下方注释：
+          // setTimeout(() => { window.location.href = 'question.html'; }, 1500);
+        } else {
+          showResult('❌ ' + (data.msg || '验证失败'), 'error');
+        }
+      } catch (e) {
+        showResult('❌ 网络错误(workers.dev国内偶发超时)', 'error');
+      }
+      btn.disabled = false; btn.textContent = '开始测试';
+    }
+    function showResult(msg, type) {
+      resultEl.style.display = 'block';
+      resultEl.textContent = msg;
+      resultEl.className = type;
+    }
+    document.getElementById('pwd').addEventListener('keypress', e => { if (e.key === 'Enter') checkPwd(); });
+  </script>
+</body>
+</html>
